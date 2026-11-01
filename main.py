@@ -27,9 +27,13 @@ def scan_port(host, port):
 
         if result == 0:
             return "open"
+        # 111 is ECONNREFUSED as numbered on Linux. That number is not portable, and on any
+        # other numbering the same refused port falls through to filtered below.
         elif result == 111: # Connection refused
             return "closed"
         else:
+            # A timeout and a firewall drop look identical from connect_ex: no answer inside my
+            # one second. I call both filtered because I cannot tell them apart from here.
             return "filtered"
     except socket.gaierror:
         logging.error(f"Could not resolve hostname: {host}")
@@ -38,6 +42,8 @@ def scan_port(host, port):
         logging.error(f"Socket error: {e}")
         return "error"
     finally:
+        # If socket() itself raised, sock was never bound and this finally block raises a second
+        # error over the first one. The ordinary path never notices that trap.
         sock.close()
 
 
@@ -84,6 +90,8 @@ def main():
 
         # Scan the specified port range
         logging.info(f"Scanning ports {start_port} to {end_port} on {host} ({target_ip})")
+        # One port at a time, up to a second of waiting on each. A wide range against a silent
+        # host takes hours, and the steady order makes the scan easy to spot from the other side.
         for port in range(start_port, end_port + 1):
             status = scan_port(target_ip, port)
             print(f"Port {port}: {status}")

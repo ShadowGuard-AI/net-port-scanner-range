@@ -74,10 +74,18 @@ def main():
             logging.error("Invalid port range. Start port must be between 1 and 65535, and less than or equal to end port.")
             sys.exit(1)
 
+        # Resolve the target once, up front: a resolution failure ends the
+        # run here instead of producing one error line per port.
+        try:
+            target_ip = socket.gethostbyname(host)
+        except socket.gaierror:
+            logging.error(f"Could not resolve hostname: {host}")
+            sys.exit(1)
+
         # Scan the specified port range
-        logging.info(f"Scanning ports {start_port} to {end_port} on {host}")
+        logging.info(f"Scanning ports {start_port} to {end_port} on {host} ({target_ip})")
         for port in range(start_port, end_port + 1):
-            status = scan_port(host, port)
+            status = scan_port(target_ip, port)
             print(f"Port {port}: {status}")
 
     except Exception as e:

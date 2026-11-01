@@ -12,3 +12,7 @@ Scans a specified range of ports on a given host. Provides status for each port,
 
 ## License
 Copyright (c) ShadowStrikeHQ
+
+## Notes
+- The target is resolved once, before any port is scanned. If the host cannot be resolved, the run prints an error and exits 1 without scanning.
+- No third-party packages are required: the tool uses only the Python standard library.
